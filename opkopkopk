@@ -1,0 +1,96 @@
+import csv
+import psycopg2
+import datetime
+
+conn = psycopg2.connect(database="tourism", user="postgres", password="admin", host="localhost", port=5432)
+cur = conn.cursor()
+
+sql_create_tourism = """
+CREATE TABLE public."туризм" (
+    "дата" timestamp,
+    "заголовок" text,
+    "текст" text,
+    "обработанныи_текст_удалены_эмодзи" text,
+    "обработанныи_текст_лемматизация_и" text,
+    "источник" text,
+    "тип_источника" text,
+    "тип_сообщения" text,
+    "тип_автора" text,
+    "место_публикации" text,
+    "пол" text,
+    "возраст" float NULL,
+    "аудитория" integer NULL,
+    "комментариев" integer NULL,
+    "цитируемость_сми" float NULL,
+    "репостов" integer NULL,
+    "лаиков" integer NULL,
+    "вовлеченность" integer NULL,
+    "просмотров" float NULL,
+    "дублеи" integer NULL,
+    "тональность" text,
+    "страна" text,
+    "регион" text,
+    "город" text,
+    "язык" text,
+    "место" text,
+    "номер_тематического_кластера" integer NULL
+);
+"""
+
+cur.execute(sql_create_tourism)
+conn.commit()
+
+with open("туризм.csv", "r", encoding="utf-8") as file:
+    reader = csv.reader(file, delimiter=",")
+    header = next(reader)
+    data = list(reader) 
+
+sql_insert = """
+INSERT INTO public."туризм" (
+    "дата",
+    "заголовок",
+    "текст",
+    "обработанныи_текст_удалены_эмодзи",
+    "обработанныи_текст_лемматизация_и",
+    "источник",
+    "тип_источника",
+    "тип_сообщения",
+    "тип_автора",
+    "место_публикации",
+    "пол",
+    "возраст",
+    "аудитория",
+    "комментариев",
+    "цитируемость_сми",
+    "репостов",
+    "лаиков",
+    "вовлеченность",
+    "просмотров",
+    "дублеи",
+    "тональность",
+    "страна",
+    "регион",
+    "город",
+    "язык",
+    "место",
+    "номер_тематического_кластера"
+) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+"""
+
+for row in data:
+    row[0] = datetime.datetime.strptime(row[0], '%d.%m.%Y %H:%M')
+    row[11] = float(row[11]) if row[11] else None  # возраст
+    row[12] = int(row[12]) if row[12] else None    # аудитория
+    row[13] = int(row[13]) if row[13] else None    # комментариев
+    row[14] = float(row[14]) if row[14] else None  # цитируемость_сми
+    row[15] = int(row[15]) if row[15] else None    # репостов
+    row[16] = int(row[16]) if row[16] else None    # лаиков
+    row[17] = int(row[17]) if row[17] else None    # вовлеченность
+    row[18] = float(row[18]) if row[18] else None  # просмотров
+    row[19] = int(row[19]) if row[19] else None    # дублеи
+    row[26] = int(row[26]) if row[26] else None    # номер_тематического_кластера
+    cur.execute(sql_insert, row)
+
+conn.commit()
+cur.close()
+conn.close()
